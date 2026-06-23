@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# privacyrbx — one-word launcher.
+# Pulls the latest config.sh + privacytoggle.sh from the repo, then runs the tool.
+# Any flags are passed through:  privacyrbx        privacyrbx --on        privacyrbx --status
+#
+# Install once:
+#   cp privacyrbx $PREFIX/bin/privacyrbx && chmod +x $PREFIX/bin/privacyrbx
+# Then just type:  privacyrbx
+
+DIR="$HOME/privacytoggle"
+REPO="https://raw.githubusercontent.com/lucivaantarez/saturnity/main"
+UA="Mozilla/5.0 (Linux; Android 13) Mobile"
+
+mkdir -p "$DIR"
+
+fetch() { # <url> <dest> ; only replaces dest on a good download (offline-safe)
+  local t; t="$(mktemp)"
+  if curl -fsSL -H "User-Agent: $UA" "$1" -o "$t" && [ -s "$t" ]; then
+    mv "$t" "$2"; return 0
+  fi
+  rm -f "$t"; return 1
+}
+
+echo "syncing from repo ..."
+fetch "$REPO/config.sh"         "$DIR/config.sh"        || echo "  config sync failed — using last local copy"
+fetch "$REPO/privacytoggle.sh"  "$DIR/privacytoggle.sh" || echo "  engine sync failed — using last local copy"
+chmod +x "$DIR/privacytoggle.sh" 2>/dev/null
+
+exec bash "$DIR/privacytoggle.sh" "$@"
